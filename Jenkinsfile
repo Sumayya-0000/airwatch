@@ -21,7 +21,6 @@ pipeline {
             }
         }
 
-        ```groovy
 stage('Login to Docker Hub') {
     steps {
         withCredentials([usernamePassword(
@@ -33,7 +32,6 @@ stage('Login to Docker Hub') {
         }
     }
 }
-```
 
         stage('Push Docker Image') {
             steps {
