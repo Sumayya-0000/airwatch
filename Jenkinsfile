@@ -1,63 +1,57 @@
+```groovy
 pipeline {
     agent any
 
-    triggers {
-        pollSCM('H/2 * * * *')
-    }
-
     environment {
+        DOCKER_USERNAME = 'sumayyasadaf'
+        DOCKER_PASSWORD = 'REPLACE'
         IMAGE_NAME = 'sumayyasadaf/airwatch'
+        IMAGE_TAG = 'latest'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                git branch: 'main',
+                    url: 'https://github.com/Sumayya-0000/airwatch.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                bat 'docker build -t %IMAGE_NAME%:%BUILD_NUMBER% .'
+                bat 'docker build -t %IMAGE_NAME%:%IMAGE_TAG% .'
             }
         }
 
-        stage('Push to Docker Hub') {
+        stage('Login to Docker Hub') {
             steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'dockerhub-creds',
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_TOKEN'
-                    )
-                ]) {
-                    bat '''
-                        @echo off
-                        echo %DOCKER_TOKEN% | docker login -u %DOCKER_USER% --password-stdin
-                        if errorlevel 1 exit /b 1
-                        docker push %IMAGE_NAME%:%BUILD_NUMBER%
-                        if errorlevel 1 exit /b 1
-                        docker logout
-                    '''
-                }
+                bat 'echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin'
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                bat 'docker push %IMAGE_NAME%:%IMAGE_TAG%'
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                bat '''
-                    kubectl apply -f k8s/deployment.yaml
-                    if errorlevel 1 exit /b 1
-
-                    kubectl apply -f k8s/service.yaml
-                    if errorlevel 1 exit /b 1
-
-                    kubectl set image deployment/airwatch airwatch=%IMAGE_NAME%:%BUILD_NUMBER%
-                    if errorlevel 1 exit /b 1
-
-                    kubectl rollout status deployment/airwatch --timeout=180s
-                '''
+                bat 'kubectl apply -f k8s/deployment.yaml'
+                bat 'kubectl apply -f k8s/service.yaml'
+                bat 'kubectl set image deployment/airwatch airwatch=%IMAGE_NAME%:%IMAGE_TAG%'
+                bat 'kubectl rollout status deployment/airwatch --timeout=120s'
             }
         }
     }
+
+    post {
+        success {
+            echo 'AirWatch CI/CD pipeline completed successfully!'
+        }
+        failure {
+            echo 'AirWatch CI/CD pipeline failed. Check the console output.'
+        }
+    }
 }
+```
