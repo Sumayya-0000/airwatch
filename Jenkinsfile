@@ -4,7 +4,6 @@ pipeline {
 
     environment {
         DOCKER_USERNAME = 'sumayyasadaf'
-        DOCKER_PASSWORD = 'REPLACE'
         IMAGE_NAME = 'sumayyasadaf/airwatch'
         IMAGE_TAG = 'latest'
     }
@@ -23,11 +22,19 @@ pipeline {
             }
         }
 
-        stage('Login to Docker Hub') {
-            steps {
-                bat 'echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin'
-            }
+        ```groovy
+stage('Login to Docker Hub') {
+    steps {
+        withCredentials([usernamePassword(
+            credentialsId: 'dockerhub-creds',
+            usernameVariable: 'DOCKER_USERNAME',
+            passwordVariable: 'DOCKER_PASSWORD'
+        )]) {
+            bat 'echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin'
         }
+    }
+}
+```
 
         stage('Push Docker Image') {
             steps {
