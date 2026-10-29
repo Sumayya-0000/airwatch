@@ -43,9 +43,10 @@ pipeline {
 
         
 
+
 stage('Login to Docker Hub') {
     steps {
-        echo 'Logging in to Docker Hub'
+        echo 'Authenticating with Docker Hub'
 
         withCredentials([
             usernamePassword(
@@ -56,11 +57,12 @@ stage('Login to Docker Hub') {
         ]) {
             bat '''
                 @echo off
-                echo %DH_PASSWORD% | docker login -u "%DH_USERNAME%" --password-stdin
+                powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$env:DH_PASSWORD | docker login -u $env:DH_USERNAME --password-stdin"
             '''
         }
     }
 }
+
 
 
 
