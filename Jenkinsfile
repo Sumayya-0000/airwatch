@@ -42,6 +42,7 @@ pipeline {
         }
 
         
+
 stage('Login to Docker Hub') {
     steps {
         echo 'Logging in to Docker Hub'
@@ -55,11 +56,12 @@ stage('Login to Docker Hub') {
         ]) {
             bat '''
                 @echo off
-                docker login -u "%DH_USERNAME%" --password-stdin
-                '''
+                echo %DH_PASSWORD% | docker login -u "%DH_USERNAME%" --password-stdin
+            '''
         }
     }
 }
+
 
 
         stage('Push Docker Image') {
